@@ -9,10 +9,10 @@ static void dealloc(CurlMulti *curl_multi) {
 
 static VALUE multi_add_handle(VALUE self, VALUE easy) {
 	CurlEasy *curl_easy;
-	Data_Get_Struct(easy, CurlEasy, curl_easy);
 	CurlMulti *curl_multi;
+	CURLMcode mcode;
+	Data_Get_Struct(easy, CurlEasy, curl_easy);
 	Data_Get_Struct(self, CurlMulti, curl_multi);
-  CURLMcode mcode;
 
   mcode = curl_multi_add_handle(curl_multi->multi, curl_easy->curl);
   if (mcode != CURLM_CALL_MULTI_PERFORM && mcode != CURLM_OK) {
@@ -36,8 +36,8 @@ static VALUE multi_add_handle(VALUE self, VALUE easy) {
 
 static VALUE multi_remove_handle(VALUE self, VALUE easy) {
 	CurlEasy *curl_easy;
-	Data_Get_Struct(easy, CurlEasy, curl_easy);
 	CurlMulti *curl_multi;
+	Data_Get_Struct(easy, CurlEasy, curl_easy);
 	Data_Get_Struct(self, CurlMulti, curl_multi);
 	
 	curl_multi->active--;
@@ -63,12 +63,12 @@ static void multi_read_info(VALUE self, CURLM *multi_handle) {
     easy_handle = msg->easy_handle;
     result = msg->data.result;
     if (easy_handle) {
+      long response_code = -1;
       ecode = curl_easy_getinfo(easy_handle, CURLINFO_PRIVATE, &easy);
       if (ecode != 0) {
         rb_raise(ecode, "error getting easy object");
       }
 
-      long response_code = -1;
       curl_easy_getinfo(easy_handle, CURLINFO_RESPONSE_CODE, &response_code);
  
 			// TODO: find out what the real problem is here and fix it.
@@ -78,9 +78,9 @@ static void multi_read_info(VALUE self, CURLM *multi_handle) {
 			if (result == 7) {
 				VALUE max_retries = rb_funcall(easy, rb_intern("max_retries?"), 0);
 				if (max_retries != Qtrue) {
+					CurlMulti *curl_multi;
 					multi_remove_handle(self, easy);
 					multi_add_handle(self, easy);
-					CurlMulti *curl_multi;
 					Data_Get_Struct(self, CurlMulti, curl_multi);
 			    curl_multi_perform(curl_multi->multi, &(curl_multi->running));
 
@@ -189,12 +189,13 @@ static VALUE multi_cleanup(VALUE self) {
 }
 
 static VALUE new(int argc, VALUE *argv, VALUE klass) {
+	VALUE multi;
 	CurlMulti *curl_multi = ALLOC(CurlMulti);
 	curl_multi->multi = curl_multi_init();
 	curl_multi->active = 0;
 	curl_multi->running = 0;
 
-	VALUE multi = Data_Wrap_Struct(cTyphoeusMulti, 0, dealloc, curl_multi);
+	multi = Data_Wrap_Struct(cTyphoeusMulti, 0, dealloc, curl_multi);
 
 	rb_obj_call_init(multi, argc, argv);
 

@@ -18,51 +18,56 @@ static void dealloc(CurlEasy *curl_easy) {
 }
 
 static VALUE easy_setopt_string(VALUE self, VALUE opt_name, VALUE parameter) {
+	long opt;
 	CurlEasy *curl_easy;
 	Data_Get_Struct(self, CurlEasy, curl_easy);
 
-	long opt = NUM2LONG(opt_name);
+	opt = NUM2LONG(opt_name);
 	curl_easy_setopt(curl_easy->curl, opt, StringValuePtr(parameter));
 	return opt_name;
 }
 
 static VALUE easy_setopt_long(VALUE self, VALUE opt_name, VALUE parameter) {
+	long opt;
 	CurlEasy *curl_easy;
 	Data_Get_Struct(self, CurlEasy, curl_easy);
 
-	long opt = NUM2LONG(opt_name);
+	opt = NUM2LONG(opt_name);
 	curl_easy_setopt(curl_easy->curl, opt, NUM2LONG(parameter));
 	return opt_name;	
 }
 
 static VALUE easy_getinfo_string(VALUE self, VALUE info) {
+	long opt;
 	char *info_string;
 	CurlEasy *curl_easy;
 	Data_Get_Struct(self, CurlEasy, curl_easy);
 
-	long opt = NUM2LONG(info);
+	opt = NUM2LONG(info);
 	curl_easy_getinfo(curl_easy->curl, opt, &info_string);
 	
 	return rb_str_new2(info_string);
 }
 
 static VALUE easy_getinfo_long(VALUE self, VALUE info) {
+	long opt;
 	long info_long;
 	CurlEasy *curl_easy;
 	Data_Get_Struct(self, CurlEasy, curl_easy);
 
-	long opt = NUM2LONG(info);
+	opt = NUM2LONG(info);
 	curl_easy_getinfo(curl_easy->curl, opt, &info_long);
 	
 	return LONG2NUM(info_long);
 }
 
 static VALUE easy_getinfo_double(VALUE self, VALUE info) {
+	long opt;
 	double info_double = 0;
 	CurlEasy *curl_easy;
 	Data_Get_Struct(self, CurlEasy, curl_easy);
 
-	long opt = NUM2LONG(info);
+	opt = NUM2LONG(info);
 	curl_easy_getinfo(curl_easy->curl, opt, &info_double);
 
 	return rb_float_new(info_double);
@@ -173,12 +178,13 @@ static VALUE version(VALUE self) {
 }
 
 static VALUE new(int argc, VALUE *argv, VALUE klass) {
+	VALUE easy;
 	CURL *curl = curl_easy_init();
 	CurlEasy *curl_easy = ALLOC(CurlEasy);
 	curl_easy->curl = curl;
 	curl_easy->headers = NULL;
 	curl_easy->request_chunk = NULL;
-	VALUE easy = Data_Wrap_Struct(cTyphoeusEasy, 0, dealloc, curl_easy);
+	easy = Data_Wrap_Struct(cTyphoeusEasy, 0, dealloc, curl_easy);
 
 	set_response_handlers(easy, curl);
 

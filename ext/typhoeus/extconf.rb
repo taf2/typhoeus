@@ -17,7 +17,7 @@ end
 
 $LIBPATH << "/opt/local/lib" if use_macports
 
-$CFLAGS << " -O3 -Wall -Wcast-qual -Wwrite-strings -Wconversion -Wmissing-noreturn -Winline"
+$CFLAGS << " -O3 -Wall -Wcast-qual -Wwrite-strings -Wconversion -Wmissing-noreturn -Winline" if Config::CONFIG['CC'] =~ /gcc/
 
 if Config::CONFIG['target_os'] == 'mingw32'
   header = File.join(ROOT, 'cross', 'curl-7.19.4.win32', 'include')
